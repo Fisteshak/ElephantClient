@@ -33,6 +33,7 @@ public class Network {
                                 .create())
                 )
                 .build();
+
         api = retrofit.create(API.class);
 
     }
@@ -57,14 +58,14 @@ public class Network {
 
 
 
-    public void uploadFile(Handler handler, ContentFile contentFile) {
-        MultipartBody.Part mainFilePart = MultipartBody.Part.createFormData("file", contentFile.getName(),
-                RequestBody.create(MediaType.parse("multipart/form-data"), contentFile.getBytes(), 0, contentFile.getSizeInt()));
+    public void uploadFile(Handler handler, ResourceFile resourceFile) {
+        MultipartBody.Part mainFilePart = MultipartBody.Part.createFormData("file", resourceFile.getName(),
+                RequestBody.create(MediaType.parse("multipart/form-data"), resourceFile.getBytes(), 0, resourceFile.getSizeInt()));
 
         MultipartBody fileBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("path", "testfolder")
-                .addFormDataPart("name", contentFile.getName())
+                .addFormDataPart("name", resourceFile.getName())
                 .addPart(mainFilePart)
                 .build();
 

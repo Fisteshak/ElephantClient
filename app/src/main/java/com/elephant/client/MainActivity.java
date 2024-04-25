@@ -4,10 +4,12 @@ import static android.content.Intent.CATEGORY_OPENABLE;
 
 import android.Manifest;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -17,10 +19,11 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.elephant.client.databinding.ActivityMainBinding;
-import com.elephant.client.message.ContentFile;
 import com.elephant.client.message.Message;
 import com.elephant.client.message.Network;
+import com.elephant.client.message.ResourceFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -31,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     Handler handler;
     Network network = new Network();
     Integer msgID = 10;
-    ContentFile contentFile;
+    ResourceFile resourceFile = null;
 
 
 
@@ -77,7 +80,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         binding.sendFileBtn.setOnClickListener(v -> {
-            network.uploadFile(handler, contentFile);
+            if (resourceFile != null) {
+                network.uploadFile(handler, resourceFile);
+            }
+            else {
+                Toast.makeText(getApplicationContext(), "Choose file!", Toast.LENGTH_SHORT).show();
+            }
 
         });
 
@@ -101,7 +109,18 @@ public class MainActivity extends AppCompatActivity {
         // result of file choose
         if(requestCode == CHOOSE_FILE_REQUEST_CODE && resultCode == RESULT_OK) {
             //The uri with the location of the file
-            contentFile = new ContentFile(data.getData(), getApplicationContext());
+
+            Uri uri = data.getData();
+            if (uri != null) {
+                try {
+                    resourceFile = new ResourceFile(data.getData(), getApplicationContext());
+                }
+                catch (IOException e) {
+                    resourceFile = null;
+                    Toast.makeText(getApplicationContext(), "Failed to retrieve file data!", Toast.LENGTH_SHORT).show();
+                }
+
+            }
 
         }
     }
