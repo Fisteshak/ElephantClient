@@ -55,4 +55,12 @@ dependencies {
     //apache commons-io (for name and path extraction)
     implementation("commons-io:commons-io:2.16.1")
 
+
+    // Java language implementation
+    implementation("android.arch.navigation:navigation-ui:1.0.0")
+    implementation("android.arch.navigation:navigation-fragment:1.0.0")
+
+
+
+
 }
