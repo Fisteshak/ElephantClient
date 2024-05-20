@@ -1,14 +1,16 @@
-package com.elephant.client.message;
+package com.elephant.client.network;
 
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
+import com.elephant.client.models.ResourceFile;
+import com.elephant.client.models.User;
 import com.google.gson.GsonBuilder;
-
-import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -23,40 +25,57 @@ public class Network {
     Retrofit retrofit;
     API api;
     long id;
-    public Network() {
+    User user;
+    String currentFolder = "/";
+
+    private static Network instance = null;
+
+    public static enum RESULT_CODE {
+        SUCCESS,
+        BAD_CREDENTIALS,
+        NETWORK_FAILURE,
+        REQUEST_FAILURE
+
+    }
+
+    private Network(User user) {
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new BasicAuthInterceptor(user.getUsername(), user.getPassword()))
+                .build();
 
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.0.102:8080")
+                .baseUrl("http://192.168.0.103:8080")
                 .addConverterFactory(GsonConverterFactory.create(
                         new GsonBuilder()
                                 .setLenient()
                                 .create())
                 )
+                .client(client)
                 .build();
 
         api = retrofit.create(API.class);
 
     }
 
-    public void getMessages(Handler handler) {
-        Call<List<Message>> call = api.getMessages();
-        call.enqueue(new Callback<List<Message>>() {
-            @Override
-            public void onResponse(Call<List<Message>> call, Response<List<Message>> response) {
-                android.os.Message msg = new android.os.Message();
-                msg.obj = response.body();
-                msg.what = 1;
-                handler.sendMessage(msg);
-            }
+    public static Network getInstance(User user) {
 
-            @Override
-            public void onFailure(Call<List<Message>> call, Throwable t) {
-                Log.d("GET MESSAGES FAIL", t.toString());
-            }
-        });
+        instance = new Network(user);
+
+        return instance;
     }
 
+    public static Network getInstance() {
+        if (instance == null) {
+            return null;
+        }
+        return instance;
+    }
 
+    public void setUser(User user) {
+        this.user = user;
+        instance = new Network(user);
+    }
 
     public void uploadFile(Handler handler, ResourceFile resourceFile) {
         MultipartBody.Part mainFilePart = MultipartBody.Part.createFormData("file", resourceFile.getName(),
@@ -90,29 +109,30 @@ public class Network {
         // Rest of your code
     }
 
-    public void createMessage(Handler handler, Message message) {
-
-        Call<Message> call = api.createMessage(message);
-        call.enqueue(new Callback<Message>() {
+    public void testCredentials(Handler handler) {
+        Call<Boolean> call = api.testUserConnection();
+        call.enqueue(new Callback<Boolean>() {
             @Override
-            public void onResponse(Call<Message> call, Response<Message> response) {
-                Log.d("CREATE MESSAGE", "CODE = " + response.code());
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                Message msg = handler.obtainMessage();
                 if (response.isSuccessful()) {
-                    android.os.Message msg = new android.os.Message();
-                    msg.obj = response.body();
-                    handler.sendMessage(msg);
-                    Log.d("CREATE MESSAGE SUCC", response.toString());
+                    msg.what = RESULT_CODE.SUCCESS.ordinal();
+                } else if (response.code() == 401 || response.code() == 403) {
+                    msg.what = RESULT_CODE.BAD_CREDENTIALS.ordinal();
+                } else {
+                    msg.what = RESULT_CODE.REQUEST_FAILURE.ordinal();
                 }
-                else {
-
-                }
-
+                handler.sendMessage(msg);
             }
 
             @Override
-            public void onFailure(Call<Message> call, Throwable t) {
-                Log.d("CREATE MESSAGE FAIL", t.toString());
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Message msg = handler.obtainMessage();
+                msg.what = RESULT_CODE.NETWORK_FAILURE.ordinal();
+                handler.sendMessage(msg);
             }
         });
     }
+
+
 }

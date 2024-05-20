@@ -1,4 +1,4 @@
-package com.elephant.client.message;
+package com.elephant.client.models;
 
 import android.content.ContentResolver;
 import android.content.Context;

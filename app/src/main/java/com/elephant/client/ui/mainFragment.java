@@ -1,26 +1,27 @@
-package com.elephant.client;
+package com.elephant.client.ui;
 
+import static android.app.Activity.RESULT_OK;
 import static android.content.Intent.CATEGORY_OPENABLE;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
-import com.elephant.client.databinding.ActivityMainBinding;
-import com.elephant.client.message.Message;
-import com.elephant.client.message.Network;
-import com.elephant.client.message.ResourceFile;
+import com.elephant.client.R;
+import com.elephant.client.databinding.FragmentMainBinding;
+import com.elephant.client.models.ResourceFile;
+import com.elephant.client.network.Network;
 
-import java.util.ArrayList;
-import java.util.Objects;
+import java.io.IOException;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -30,21 +31,21 @@ import java.util.Objects;
 public class mainFragment extends Fragment {
 
     public static final int CHOOSE_FILE_REQUEST_CODE = 123;
-    ActivityMainBinding binding;
+    FragmentMainBinding binding;
+
 
     Handler handler;
-    Network network = new Network();
     Integer msgID = 10;
     ResourceFile resourceFile = null;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private static final String ARG_USERNAME = "username";
+    private static final String ARG_PASSWORD = "password";
 
     // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private String username;
+    private String password;
 
     public mainFragment() {
         // Required empty public constructor
@@ -62,8 +63,8 @@ public class mainFragment extends Fragment {
     public static mainFragment newInstance(String param1, String param2) {
         mainFragment fragment = new mainFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putString(ARG_USERNAME, param1);
+        args.putString(ARG_PASSWORD, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -72,8 +73,8 @@ public class mainFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            username = getArguments().getString(ARG_USERNAME);
+            password = getArguments().getString(ARG_PASSWORD);
         }
     }
 
@@ -82,6 +83,8 @@ public class mainFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_main, container, false);
+        binding = FragmentMainBinding.bind(view);
+
 
 
         //ask permissions
@@ -92,9 +95,16 @@ public class mainFragment extends Fragment {
 //        if(!permissionsHandler.allPermissionsGranted()) {
 //            permissionsHandler.askPermissions();
 //        }
+        binding.accountBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavController navController = Navigation.findNavController(v);
+                navController.navigate(R.id.action_mainFragment_to_loginFragment);
+            }
+        });
 
 
-        view.findViewById(R.id.chooseFileBtn).setOnClickListener(v -> {
+        binding.chooseFileBtn.setOnClickListener(v -> {
             Intent intent = new Intent()
                     .setType("*/*")
                     .addCategory(CATEGORY_OPENABLE)
@@ -104,31 +114,46 @@ public class mainFragment extends Fragment {
             startActivityForResult(Intent.createChooser(intent, "Select a file"), 123);
         });
 
-        view.findViewById(R.id.refreshButton).setOnClickListener(v -> {
 
-
-        });
-
-        view.findViewById(R.id.sendFileBtn).setOnClickListener(v -> {
+        binding.sendFileBtn.setOnClickListener(v -> {
             if (resourceFile != null) {
-                network.uploadFile(handler, resourceFile);
+                Network.getInstance().uploadFile(handler, resourceFile);
             } else {
                 Toast.makeText(getActivity().getApplicationContext(), "Choose file!", Toast.LENGTH_SHORT).show();
             }
-
         });
 
-        handler = new Handler(Objects.requireNonNull(Looper.myLooper())) {
+        binding.enterPathBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void handleMessage(@NonNull android.os.Message msg) {
-                super.handleMessage(msg);
-                if (msg.obj != null && msg.what == 1) {
-                    ArrayList<Message> messages;
+            public void onClick(View v) {
 
+
+
+            }
+        });
+
+        return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // result of file choose
+        if (requestCode == CHOOSE_FILE_REQUEST_CODE && resultCode == RESULT_OK) {
+            //The uri with the location of the file
+
+            Uri uri = data.getData();
+            if (uri != null) {
+                try {
+                    resourceFile = new ResourceFile(data.getData(), getActivity().getApplicationContext());
+                } catch (IOException e) {
+                    resourceFile = null;
+                    Toast.makeText(getActivity().getApplicationContext(), "Failed to retrieve file data!", Toast.LENGTH_SHORT).show();
                 }
 
             }
-        };
-        return view;
+
+        }
     }
+
 }

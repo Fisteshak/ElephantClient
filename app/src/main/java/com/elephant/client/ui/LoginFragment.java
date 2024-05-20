@@ -1,14 +1,23 @@
-package com.elephant.client;
+package com.elephant.client.ui;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+
+import com.elephant.client.R;
+import com.elephant.client.models.User;
+import com.elephant.client.network.Network;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -26,6 +35,7 @@ public class LoginFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    Network network;
     public LoginFragment() {
         // Required empty public constructor
     }
@@ -55,6 +65,7 @@ public class LoginFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
     }
 
     @Override
@@ -67,10 +78,50 @@ public class LoginFragment extends Fragment {
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.action_loginFragment_to_mainFragment);
+                EditText usernameED = view.findViewById(R.id.enterUsernameEditText);
+                EditText passwordED = view.findViewById(R.id.enterPasswordEditText);
+                TextView statusLine = view.findViewById(R.id.statusLine);
+                String username = usernameED.getText().toString();
+                String password = passwordED.getText().toString();
+
+                if (username.isEmpty()) {
+                    statusLine.setText("Please enter a username");
+                    return;
+                }
+
+                if (password.isEmpty()) {
+                    statusLine.setText("Please enter a password");
+                    return;
+                }
+
+                network = Network.getInstance(new User(username, password));
+
+                Handler handler = new Handler(new Handler.Callback() {
+                    @Override
+                    public boolean handleMessage(@NonNull Message msg) {
+                        if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
+                            statusLine.setText("Connection successful");
+
+                            Bundle bundle = new Bundle();
+                            bundle.putString("username", username);
+                            bundle.putString("password", password);
+
+                            NavController navController = Navigation.findNavController(v);
+                            navController.navigate(R.id.action_loginFragment_to_mainFragment, bundle);
+
+                        } else if (msg.what == Network.RESULT_CODE.BAD_CREDENTIALS.ordinal()) {
+                            statusLine.setText("Bad credentials");
+                        }
+                        return false;
+                    }
+                });
+
+                network.testCredentials(handler);
             }
         });
+
+
+
 
         return view;
 

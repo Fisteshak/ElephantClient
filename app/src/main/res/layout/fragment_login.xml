@@ -3,35 +3,50 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoginFragment">
+    tools:context=".ui.LoginFragment">
+
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:gravity="center_horizontal|center_vertical"
+        android:layout_marginBottom="300dp"
+        android:orientation="vertical">
 
         <EditText
             android:id="@+id/enterUsernameEditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ems="10"
             android:hint="Enter your name"
+            android:inputType="text"
+            android:maxLength="20"
             android:textSize="24sp" />
+
 
         <EditText
             android:id="@+id/enterPasswordEditText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ems="10"
             android:hint="Enter your password"
+            android:inputType="textPassword"
+            android:maxLength="20"
             android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/statusLine"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
 
         <Button
             android:id="@+id/loginBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:maxLength="15"
             android:text="Login"
             android:textSize="30sp" />
-
 
     </LinearLayout>
 
