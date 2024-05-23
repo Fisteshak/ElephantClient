@@ -21,5 +21,6 @@ public interface API {
     @GET("fs/folder")
     Call<FolderStructure> getFolders(@Query("id") Integer folderID);
 
-
+    @POST("fs/folder")
+    Call<Integer> createFolder(@Query("id") Integer parentID, @Query("name") String folderName);
 }

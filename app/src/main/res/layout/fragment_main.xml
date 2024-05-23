@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="center"
+            android:gravity="start"
             android:text="Адрес папки"
             android:textSize="30dp" />
 
@@ -39,44 +39,13 @@
             android:src="@drawable/ic_login" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_below="@+id/linearLayout"
 
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
-        android:orientation="vertical">
-
-        <Button
-            android:id="@+id/chooseFileBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Выбрать файл" />
-
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/sendFileBtn"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="Отправить" />
-
-        </LinearLayout>
-
-
-    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/linearLayout2" />
+        android:layout_below="@+id/linearLayout" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
@@ -88,6 +57,13 @@
         android:layout_margin="16dp"
         android:contentDescription="add"
         android:src="@drawable/ic_add" />
+
+    <RelativeLayout
+        android:id="@+id/bac_dim_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#C0000000"
+        android:visibility="gone"></RelativeLayout>
 
 
 </RelativeLayout>

@@ -7,9 +7,13 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -42,6 +46,7 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
 
     FilesystemAdapter adapter;
     Handler handler;
+    Handler createFolderHandler;
     Integer msgID = 10;
     ResourceFile resourceFile = null;
 
@@ -61,6 +66,8 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
 
     FolderPath folderPath = new FolderPath();
     private Handler refreshBtnHandler;
+    PopupWindow createObjectPopupWindow;
+    PopupWindow createFolderPopupWindow;
 
     public mainFragment() {
         // Required empty public constructor
@@ -100,8 +107,6 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         binding = FragmentMainBinding.bind(view);
 
-
-
         //ask permissions
         //TODO move to main activity
 //        PermissionsHandler permissionsHandler = new PermissionsHandler(this, view.getApplicationContext());
@@ -115,39 +120,6 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
             public void onClick(View v) {
                 NavController navController = Navigation.findNavController(v);
                 navController.navigate(R.id.action_mainFragment_to_loginFragment);
-            }
-        });
-
-
-        binding.chooseFileBtn.setOnClickListener(v -> {
-            Intent intent = new Intent()
-                    .setType("*/*")
-                    .addCategory(CATEGORY_OPENABLE)
-                    .setAction(Intent.ACTION_GET_CONTENT);
-            //TODO add possibility to choose multiple file via EXTRA_ALLOW_MULTIPLE
-
-            startActivityForResult(Intent.createChooser(intent, "Select a file"), 123);
-        });
-
-
-        binding.sendFileBtn.setOnClickListener(v -> {
-            if (resourceFile != null) {
-                Network.getInstance().uploadFile(handler, resourceFile, folderPath.getTopFolder().getId());
-
-                Handler handler = new Handler();
-                Runnable runnableCode = new Runnable() {
-                    @Override
-                    public void run() {
-                        // refresh the list of files to see the uploaded file
-                        Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
-                    }
-                };
-
-// Delay the runnable task by posting through the handler
-                handler.postDelayed(runnableCode, 2000);
-
-            } else {
-                Toast.makeText(getActivity().getApplicationContext(), "Choose file!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -167,6 +139,19 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
             return false;
         });
 
+        createFolderHandler = new Handler(msg -> {
+            if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
+
+
+                Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
+
+
+            }
+            return false;
+        });
+
+
+
         binding.refreshBtn.setOnClickListener(v -> {
 
 //            Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
@@ -174,11 +159,14 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
 
         });
 
+        binding.fab.setOnClickListener(v -> {
+            showPopupWindow(v, inflater);
+
+        });
 
         adapter = new FilesystemAdapter(this::onItemClick, refreshBtnHandler);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerView.setAdapter(adapter);
-
 
         // This callback is only called when MyFragment is at least started
         OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
@@ -201,6 +189,7 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         // result of file choose
+        createObjectPopupWindow.dismiss();
         if (requestCode == CHOOSE_FILE_REQUEST_CODE && resultCode == RESULT_OK) {
             //The uri with the location of the file
 
@@ -208,6 +197,23 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
             if (uri != null) {
                 try {
                     resourceFile = new ResourceFile(data.getData(), getActivity().getApplicationContext());
+                    if (resourceFile != null) {
+                        Network.getInstance().uploadFile(handler, resourceFile, folderPath.getTopFolder().getId());
+
+                        Handler handler = new Handler();
+                        Runnable runnableCode = new Runnable() {
+                            @Override
+                            public void run() {
+                                // refresh the list of files to see the uploaded file
+                                Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
+                            }
+                        };
+
+                        handler.postDelayed(runnableCode, 2000);
+
+                    } else {
+                        Toast.makeText(getActivity().getApplicationContext(), "Choose file!", Toast.LENGTH_SHORT).show();
+                    }
                 } catch (IOException e) {
                     resourceFile = null;
                     Toast.makeText(getActivity().getApplicationContext(), "Failed to retrieve file data!", Toast.LENGTH_SHORT).show();
@@ -224,5 +230,106 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
         //binding.folderPathTv.setText(currentFolderID.toString());
         Network.getInstance().getFolders(refreshBtnHandler, id);
 
+    }
+
+    public void showPopupWindow(View view, LayoutInflater inflater) {
+        // inflate the layout of the popup window
+
+        View popupView = inflater.inflate(R.layout.add_object_popup_window, null);
+
+        popupView.findViewById(R.id.choose_folder_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAddFolderPopupWindow(view, inflater);
+            }
+        });
+
+
+        popupView.findViewById(R.id.choose_file_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent()
+                        .setType("*/*")
+                        .addCategory(CATEGORY_OPENABLE)
+                        .setAction(Intent.ACTION_GET_CONTENT);
+                //TODO add possibility to choose multiple file via EXTRA_ALLOW_MULTIPLE
+
+                startActivityForResult(Intent.createChooser(intent, "Select a file"), 123);
+
+
+            }
+        });
+
+        // create the popup window
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true; // lets taps outside the popup also dismiss it
+        createObjectPopupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // show the popup window
+        // which view you pass in doesn't matter, it is only used for the window tolken
+        createObjectPopupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        binding.bacDimLayout.setVisibility(View.VISIBLE);
+
+
+        createObjectPopupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                binding.bacDimLayout.setVisibility(View.GONE);
+            }
+        });
+
+        // dismiss the popup window when touched
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                createObjectPopupWindow.dismiss();
+                return true;
+            }
+        });
+    }
+
+    public void showAddFolderPopupWindow(View view, LayoutInflater inflater) {
+        // inflate the layout of the popup window
+
+        View popupView = inflater.inflate(R.layout.add_folder_popup_window, null);
+
+        popupView.findViewById(R.id.create_folder_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String folderName = ((android.widget.EditText) popupView.findViewById(R.id.folder_name_ed)).getText().toString();
+                Network.getInstance().createFolder(createFolderHandler, folderPath.getTopFolder().getId(), folderName);
+                createFolderPopupWindow.dismiss();
+            }
+        });
+
+        // create the popup window
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true; // lets taps outside the popup also dismiss it
+        createFolderPopupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // show the popup window
+        // which view you pass in doesn't matter, it is only used for the window tolken
+        createFolderPopupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        binding.bacDimLayout.setVisibility(View.VISIBLE);
+
+
+        createFolderPopupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                createObjectPopupWindow.dismiss();
+                binding.bacDimLayout.setVisibility(View.GONE);
+            }
+        });
+
+        // dismiss the popup window when touched
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                createFolderPopupWindow.dismiss();
+                return true;
+            }
+        });
     }
 }

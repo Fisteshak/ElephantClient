@@ -108,6 +108,30 @@ public class Network {
 
     }
 
+    public void createFolder(Handler handler, Integer parentID, String folderName) {
+        Call<Integer> call = api.createFolder(parentID, folderName);
+
+        call.enqueue(new Callback<Integer>() {
+            @Override
+            public void onResponse(Call<Integer> call, Response<Integer> response) {
+                Message msg = new Message();
+                if (response.code() == 200) {
+                    msg.obj = response.body();
+                    msg.what = RESULT_CODE.SUCCESS.ordinal();
+                } else if (response.code() == 409) {
+                    msg.what = RESULT_CODE.CONFLICT.ordinal();
+                }
+                handler.sendMessage(msg);
+            }
+
+            @Override
+            public void onFailure(Call<Integer> call, Throwable t) {
+                Message msg = new Message();
+                msg.what = RESULT_CODE.NETWORK_FAILURE.ordinal();
+                handler.sendMessage(msg);
+            }
+        });
+    }
 
     public void uploadFile(Handler handler, ResourceFile resourceFile, Integer parentID) {
         MultipartBody.Part mainFilePart = MultipartBody.Part.createFormData("file", resourceFile.getName(),
