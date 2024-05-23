@@ -16,6 +16,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.elephant.client.R;
+import com.elephant.client.databinding.FragmentLoginBinding;
 import com.elephant.client.models.User;
 import com.elephant.client.network.Network;
 
@@ -35,6 +36,7 @@ public class LoginFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    FragmentLoginBinding binding;
     Network network;
     public LoginFragment() {
         // Required empty public constructor
@@ -73,6 +75,7 @@ public class LoginFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_login, container, false);
+        binding = FragmentLoginBinding.bind(view);
 
         Button loginBtn = view.findViewById(R.id.loginBtn);
         loginBtn.setOnClickListener(new View.OnClickListener() {
@@ -94,6 +97,8 @@ public class LoginFragment extends Fragment {
                     return;
                 }
 
+                binding.statusLine.setText("Connecting...");
+
                 network = Network.getInstance(new User(username, password));
 
                 Handler handler = new Handler(new Handler.Callback() {
@@ -111,6 +116,8 @@ public class LoginFragment extends Fragment {
 
                         } else if (msg.what == Network.RESULT_CODE.BAD_CREDENTIALS.ordinal()) {
                             statusLine.setText("Bad credentials");
+                        } else if (msg.what == Network.RESULT_CODE.NETWORK_FAILURE.ordinal()) {
+                            statusLine.setText("No connection to server");
                         }
                         return false;
                     }

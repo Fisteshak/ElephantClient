@@ -4,9 +4,12 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.elephant.client.models.FolderStructure;
 import com.elephant.client.models.ResourceFile;
 import com.elephant.client.models.User;
 import com.google.gson.GsonBuilder;
+
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -30,11 +33,13 @@ public class Network {
 
     private static Network instance = null;
 
+
     public static enum RESULT_CODE {
         SUCCESS,
         BAD_CREDENTIALS,
         NETWORK_FAILURE,
-        REQUEST_FAILURE
+        REQUEST_FAILURE,
+        CONFLICT
 
     }
 
@@ -42,6 +47,7 @@ public class Network {
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(new BasicAuthInterceptor(user.getUsername(), user.getPassword()))
+                .connectTimeout(3, TimeUnit.SECONDS)
                 .build();
 
         retrofit = new Retrofit.Builder()
@@ -77,13 +83,39 @@ public class Network {
         instance = new Network(user);
     }
 
-    public void uploadFile(Handler handler, ResourceFile resourceFile) {
+    public void getFolders(Handler handler, Integer parentFolderID) {
+        Call<FolderStructure> call = api.getFolders(parentFolderID);
+        call.enqueue(new Callback<FolderStructure>() {
+            @Override
+            public void onResponse(Call<FolderStructure> call, Response<FolderStructure> response) {
+                Message msg = new Message();
+                if (response.code() == 200) {
+                    msg.obj = response.body();
+                    msg.what = RESULT_CODE.SUCCESS.ordinal();
+                } else if (response.code() == 409) {
+                    msg.what = RESULT_CODE.CONFLICT.ordinal();
+                }
+                handler.sendMessage(msg);
+            }
+
+            @Override
+            public void onFailure(Call<FolderStructure> call, Throwable t) {
+                Message msg = new Message();
+                msg.what = RESULT_CODE.NETWORK_FAILURE.ordinal();
+                handler.sendMessage(msg);
+            }
+        });
+
+    }
+
+
+    public void uploadFile(Handler handler, ResourceFile resourceFile, Integer parentID) {
         MultipartBody.Part mainFilePart = MultipartBody.Part.createFormData("file", resourceFile.getName(),
                 RequestBody.create(MediaType.parse("multipart/form-data"), resourceFile.getBytes(), 0, resourceFile.getSizeInt()));
 
         MultipartBody fileBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("path", "testfolder")
+                .addFormDataPart("parent_id", parentID.toString())
                 .addFormDataPart("name", resourceFile.getName())
                 .addPart(mainFilePart)
                 .build();

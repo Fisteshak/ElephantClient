@@ -12,28 +12,35 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.elephant.client.FolderPath;
 import com.elephant.client.R;
 import com.elephant.client.databinding.FragmentMainBinding;
+import com.elephant.client.models.FolderStructure;
+import com.elephant.client.models.FsObject;
 import com.elephant.client.models.ResourceFile;
 import com.elephant.client.network.Network;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link mainFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class mainFragment extends Fragment {
+public class mainFragment extends Fragment implements FilesystemAdapter.OnItemClickListener {
 
     public static final int CHOOSE_FILE_REQUEST_CODE = 123;
     FragmentMainBinding binding;
 
-
+    FilesystemAdapter adapter;
     Handler handler;
     Integer msgID = 10;
     ResourceFile resourceFile = null;
@@ -46,6 +53,14 @@ public class mainFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String username;
     private String password;
+
+
+    // path should not have leading or trailing slashes e.g.
+    // correct: "folder1/folder2"
+    private Integer currentFolderID = 1;
+
+    FolderPath folderPath = new FolderPath();
+    private Handler refreshBtnHandler;
 
     public mainFragment() {
         // Required empty public constructor
@@ -117,20 +132,67 @@ public class mainFragment extends Fragment {
 
         binding.sendFileBtn.setOnClickListener(v -> {
             if (resourceFile != null) {
-                Network.getInstance().uploadFile(handler, resourceFile);
+                Network.getInstance().uploadFile(handler, resourceFile, folderPath.getTopFolder().getId());
+
+                Handler handler = new Handler();
+                Runnable runnableCode = new Runnable() {
+                    @Override
+                    public void run() {
+                        // refresh the list of files to see the uploaded file
+                        Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
+                    }
+                };
+
+// Delay the runnable task by posting through the handler
+                handler.postDelayed(runnableCode, 2000);
+
             } else {
                 Toast.makeText(getActivity().getApplicationContext(), "Choose file!", Toast.LENGTH_SHORT).show();
             }
         });
 
-        binding.enterPathBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
 
+        refreshBtnHandler = new Handler(msg -> {
+            if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
+                FolderStructure folder = (FolderStructure) msg.obj;
+                List<FsObject> o = new ArrayList<>();
+                o.addAll(folder.getSubfolders());
+                o.addAll(folder.getFiles());
 
+                adapter.setObjects(o);
+                folderPath.addFolder(folder.getParentFolder());
 
+                binding.folderPathTv.setText(folderPath.getFullPath());
             }
+            return false;
         });
+
+        binding.refreshBtn.setOnClickListener(v -> {
+
+//            Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
+            Network.getInstance().getFolders(refreshBtnHandler, folderPath.getRootFolder().getId());
+
+        });
+
+
+        adapter = new FilesystemAdapter(this::onItemClick, refreshBtnHandler);
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerView.setAdapter(adapter);
+
+
+        // This callback is only called when MyFragment is at least started
+        OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
+            @Override
+            public void handleOnBackPressed() {
+                folderPath.deleteFolder();
+                Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
+
+                // Handle the back button event
+            }
+        };
+        requireActivity().getOnBackPressedDispatcher().addCallback(this, callback);
+
+        Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
 
         return view;
     }
@@ -156,4 +218,11 @@ public class mainFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onItemClick(int id) {
+
+        //binding.folderPathTv.setText(currentFolderID.toString());
+        Network.getInstance().getFolders(refreshBtnHandler, id);
+
+    }
 }
