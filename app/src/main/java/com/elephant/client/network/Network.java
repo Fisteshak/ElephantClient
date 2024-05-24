@@ -11,10 +11,12 @@ import com.google.gson.GsonBuilder;
 
 import java.util.concurrent.TimeUnit;
 
+import lombok.SneakyThrows;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -51,7 +53,7 @@ public class Network {
                 .build();
 
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.0.103:8080")
+                .baseUrl("http://192.168.0.104:8080")
                 .addConverterFactory(GsonConverterFactory.create(
                         new GsonBuilder()
                                 .setLenient()
@@ -163,6 +165,30 @@ public class Network {
             }
         });
         // Rest of your code
+    }
+
+    public void getFile(Handler handler, int folder_id) {
+        Call<ResponseBody> call =  api.getFile(folder_id);
+        call.enqueue(new Callback<ResponseBody>() {
+            @SneakyThrows
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                Log.d("GET FILE CODE",  "Code: " + String.valueOf(response.code()));
+                if (response.isSuccessful()) {
+                    Message msg = new Message();
+                    msg.obj = response;
+                    msg.what = RESULT_CODE.SUCCESS.ordinal();
+                    handler.sendMessage(msg);
+                }
+
+
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.d("GET FILE FAIL", t.toString());
+            }
+        });
     }
 
     public void testCredentials(Handler handler) {

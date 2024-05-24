@@ -25,19 +25,25 @@ import lombok.Setter;
 @NoArgsConstructor
 public class FilesystemAdapter extends RecyclerView.Adapter {
 
-    public interface OnItemClickListener {
-        void onItemClick(int id);
+    public interface OnFolderClickListener {
+        void onFolderClick(int id);
+    }
+    public interface OnFileClickListener {
+        void onFileClick(int fileID);
     }
 
     @Getter
     private List<FsObject> objects = new ArrayList<>();
     @Setter
-    private OnItemClickListener onItemClickListener;
+    private OnFolderClickListener onFolderClickListener;
+    @Setter
+    private OnFileClickListener onFileClickListener;
     @Setter
     Handler handler;
 
-    public FilesystemAdapter(OnItemClickListener listener, Handler handler) {
-        this.onItemClickListener = listener;
+    public FilesystemAdapter(OnFolderClickListener onFolderClickListener, OnFileClickListener onFileClickListener, Handler handler) {
+        this.onFolderClickListener = onFolderClickListener;
+        this.onFileClickListener = onFileClickListener;
         this.handler = handler;
     }
 
@@ -118,6 +124,7 @@ public class FilesystemAdapter extends RecyclerView.Adapter {
             // textView.setText()...
             fileName.setText("File: " + file.getName());
             itemView.setOnClickListener(v -> {
+                onFileClickListener.onFileClick(file.getId());
             });
         }
     }
@@ -139,7 +146,7 @@ public class FilesystemAdapter extends RecyclerView.Adapter {
             // bind data to the views
             // textView.setText()...
             itemView.setOnClickListener(v -> {
-                onItemClickListener.onItemClick(folder.getId());
+                onFolderClickListener.onFolderClick(folder.getId());
             });
             folderName.setText("Folder: " + folder.getName());
 

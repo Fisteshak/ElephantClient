@@ -4,6 +4,7 @@ package com.elephant.client.network;
 import com.elephant.client.models.FolderStructure;
 
 import okhttp3.MultipartBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -23,4 +24,8 @@ public interface API {
 
     @POST("fs/folder")
     Call<Integer> createFolder(@Query("id") Integer parentID, @Query("name") String folderName);
+
+    @GET("/fs/file")
+    Call<ResponseBody> getFile(@Query("file_id") Integer folder_id);
+
 }

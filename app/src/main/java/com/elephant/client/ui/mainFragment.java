@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -31,19 +32,26 @@ import com.elephant.client.models.ResourceFile;
 import com.elephant.client.network.Network;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.ResponseBody;
+import retrofit2.Response;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link mainFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class mainFragment extends Fragment implements FilesystemAdapter.OnItemClickListener {
+public class mainFragment extends Fragment implements FilesystemAdapter.OnFolderClickListener, FilesystemAdapter.OnFileClickListener {
 
     public static final int CHOOSE_FILE_REQUEST_CODE = 123;
+    public static final int GET_FILE_REQUEST_CODE = 124;
     FragmentMainBinding binding;
 
+    private String saveFile;
+    private String saveFileName;
     FilesystemAdapter adapter;
     Handler handler;
     Handler createFolderHandler;
@@ -66,6 +74,7 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
 
     FolderPath folderPath = new FolderPath();
     private Handler refreshBtnHandler;
+    private Handler getFileHandler;
     PopupWindow createObjectPopupWindow;
     PopupWindow createFolderPopupWindow;
 
@@ -144,12 +153,30 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
 
 
                 Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
-
-
             }
             return false;
         });
 
+        getFileHandler = new Handler(msg -> {
+            if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
+                try (ResponseBody responseBody = ((Response<ResponseBody>) msg.obj).body()) {
+                    saveFile = responseBody.string();
+
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    intent.putExtra(Intent.EXTRA_TITLE, "YOUR FILENAME");
+                    startActivityForResult(intent, GET_FILE_REQUEST_CODE);
+
+                } catch (Exception e) {
+                    Log.e("mainFragment", "Failed to get file!", e);
+                }
+
+            } else if (msg.what == Network.RESULT_CODE.REQUEST_FAILURE.ordinal()) {
+                Toast.makeText(getActivity().getApplicationContext(), "Failed to get file!", Toast.LENGTH_SHORT).show();
+            }
+            return false;
+        });
 
 
         binding.refreshBtn.setOnClickListener(v -> {
@@ -164,7 +191,7 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
 
         });
 
-        adapter = new FilesystemAdapter(this::onItemClick, refreshBtnHandler);
+        adapter = new FilesystemAdapter(this::onFolderClick, this::onFileClick, refreshBtnHandler);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerView.setAdapter(adapter);
 
@@ -188,8 +215,10 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CHOOSE_FILE_REQUEST_CODE)
+            createObjectPopupWindow.dismiss();
+
         // result of file choose
-        createObjectPopupWindow.dismiss();
         if (requestCode == CHOOSE_FILE_REQUEST_CODE && resultCode == RESULT_OK) {
             //The uri with the location of the file
 
@@ -221,15 +250,34 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
 
             }
 
+        } else if(requestCode == GET_FILE_REQUEST_CODE && resultCode == RESULT_OK) {
+            Uri uri = data.getData();
+
+            //just as an example, I am writing a String to the Uri I received from the user:
+
+            try {
+                OutputStream output = getContext().getContentResolver().openOutputStream(uri);
+                output.write(saveFile.getBytes());
+                output.flush();
+                output.close();
+            }
+            catch(IOException e) {
+                Toast.makeText(getActivity().getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
     @Override
-    public void onItemClick(int id) {
+    public void onFolderClick(int id) {
 
         //binding.folderPathTv.setText(currentFolderID.toString());
         Network.getInstance().getFolders(refreshBtnHandler, id);
 
+    }
+
+    @Override
+    public void onFileClick(int fileID) {
+        Network.getInstance().getFile(getFileHandler, fileID);
     }
 
     public void showPopupWindow(View view, LayoutInflater inflater) {
@@ -332,4 +380,6 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnItemCl
             }
         });
     }
+
+
 }
