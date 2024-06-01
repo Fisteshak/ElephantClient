@@ -5,13 +5,14 @@
     android:layout_height="50dp"
     android:gravity="center_vertical">
 
+
+
     <ImageView
         android:id="@+id/image"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        tools:srcCompat="@drawable/ic_folder2"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
         android:layout_weight="0"
-
+        tools:srcCompat="@drawable/ic_file2"
         />
 
     <TextView
@@ -21,18 +22,18 @@
         android:textSize="20sp"
         android:gravity="center_vertical"
         android:layout_weight="1"
-        android:hint="item name" />
-
-<!--    <ImageButton-->
-<!--        android:id="@+id/download_folder_btn"-->
-<!--        android:layout_width="45dp"-->
-<!--        android:layout_height="45dp"-->
-<!--        android:layout_weight="0"-->
-<!--        android:src="@drawable/ic_download"-->
-<!--        />-->
+        android:hint="item name"/>
 
     <ImageButton
-        android:id="@+id/delete_folder_btn"
+        android:id="@+id/download_file_btn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_weight="0"
+        android:src="@drawable/ic_download"
+        />
+
+    <ImageButton
+        android:id="@+id/delete_file_btn"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_weight="0"

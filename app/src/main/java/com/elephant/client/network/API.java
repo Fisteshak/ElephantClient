@@ -7,6 +7,7 @@ import okhttp3.MultipartBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
@@ -25,7 +26,13 @@ public interface API {
     @POST("fs/folder")
     Call<Integer> createFolder(@Query("id") Integer parentID, @Query("name") String folderName);
 
+    @DELETE("fs/folder")
+    Call<Boolean> deleteFolder(@Query("id") Integer file_id);
+
     @GET("/fs/file")
-    Call<ResponseBody> getFile(@Query("file_id") Integer folder_id);
+    Call<ResponseBody> getFile(@Query("file_id") Integer file_id);
+
+    @DELETE("fs/file")
+    Call<Boolean> deleteFile(@Query("id") Integer file_id);
 
 }

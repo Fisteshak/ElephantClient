@@ -11,32 +11,46 @@
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:background="@drawable/outline">
 
-        <TextView
-            android:id="@+id/folder_path_tv"
+        <HorizontalScrollView
+            android:id="@+id/horizontalScrollView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="start"
-            android:text="Адрес папки"
-            android:textSize="30dp" />
+            android:scrollbars="none"
 
+
+            android:layout_gravity="center_horizontal">
+
+            <TextView
+                android:layout_marginLeft="2dp"
+                android:layout_marginTop="4dp"
+                android:id="@+id/folder_path_tv"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="start"
+                android:text="Адрес папки"
+                android:textSize="24dp"
+                android:background="#FDF6FE"/>
+
+        </HorizontalScrollView>
         <ImageButton
             android:id="@+id/refresh_btn"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_weight="4"
-            android:background="#FDF6FE"
-            android:src="@drawable/ic_refresh" />
+            android:src="@drawable/ic_home"
+            android:background="@drawable/outline"/>
 
         <ImageButton
             android:id="@+id/accountBtn"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_weight="4"
-            android:background="#FDF6FE"
-            android:src="@drawable/ic_login" />
+            android:src="@drawable/ic_login"
+            android:background="@drawable/outline"/>
     </LinearLayout>
 
 

@@ -88,16 +88,16 @@ public class LoginFragment extends Fragment {
                 String password = passwordED.getText().toString();
 
                 if (username.isEmpty()) {
-                    statusLine.setText("Please enter a username");
+                    statusLine.setText("Введите логин");
                     return;
                 }
 
                 if (password.isEmpty()) {
-                    statusLine.setText("Please enter a password");
+                    statusLine.setText("Введите пароль");
                     return;
                 }
 
-                binding.statusLine.setText("Connecting...");
+                binding.statusLine.setText("Подключение...");
 
                 network = Network.getInstance(new User(username, password));
 
@@ -105,7 +105,7 @@ public class LoginFragment extends Fragment {
                     @Override
                     public boolean handleMessage(@NonNull Message msg) {
                         if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
-                            statusLine.setText("Connection successful");
+                            statusLine.setText("Подключение успешно");
 
                             Bundle bundle = new Bundle();
                             bundle.putString("username", username);
@@ -115,9 +115,9 @@ public class LoginFragment extends Fragment {
                             navController.navigate(R.id.action_loginFragment_to_mainFragment, bundle);
 
                         } else if (msg.what == Network.RESULT_CODE.BAD_CREDENTIALS.ordinal()) {
-                            statusLine.setText("Bad credentials");
+                            statusLine.setText("Неправильный пароль или логин");
                         } else if (msg.what == Network.RESULT_CODE.NETWORK_FAILURE.ordinal()) {
-                            statusLine.setText("No connection to server");
+                            statusLine.setText("Нет соединения с сервером");
                         }
                         return false;
                     }

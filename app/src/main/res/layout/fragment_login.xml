@@ -18,7 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:hint="Enter your name"
+            android:hint="Введите логин"
             android:inputType="text"
             android:maxLength="20"
             android:textSize="24sp" />
@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:hint="Enter your password"
+            android:hint="Введите пароль"
             android:inputType="textPassword"
             android:maxLength="20"
             android:textSize="24sp" />
@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLength="15"
-            android:text="Login"
+            android:text="Войти"
             android:textSize="30sp" />
 
     </LinearLayout>

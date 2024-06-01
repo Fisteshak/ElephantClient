@@ -53,7 +53,7 @@ public class Network {
                 .build();
 
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.0.104:8080")
+                .baseUrl("http://192.168.43.71:8080")
                 .addConverterFactory(GsonConverterFactory.create(
                         new GsonBuilder()
                                 .setLenient()
@@ -90,6 +90,7 @@ public class Network {
         call.enqueue(new Callback<FolderStructure>() {
             @Override
             public void onResponse(Call<FolderStructure> call, Response<FolderStructure> response) {
+
                 Message msg = new Message();
                 if (response.code() == 200) {
                     msg.obj = response.body();
@@ -180,8 +181,6 @@ public class Network {
                     msg.what = RESULT_CODE.SUCCESS.ordinal();
                     handler.sendMessage(msg);
                 }
-
-
             }
 
             @Override
@@ -191,6 +190,52 @@ public class Network {
         });
     }
 
+
+    public void deleteFile(Handler handler, Integer file_id) {
+        Call<Boolean> call =  api.deleteFile(file_id);
+        call.enqueue(new Callback<Boolean>() {
+            @SneakyThrows
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                Log.d("DELETE FILE", "CODE " + response.code());
+                if (response.isSuccessful()) {
+                    Message msg = new Message();
+                    msg.obj = response;
+                    msg.what = RESULT_CODE.SUCCESS.ordinal();
+                    handler.sendMessage(msg);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.d("DELETE FILE", "FAIL " + t.toString());
+
+            }
+        });
+    }
+
+    public void deleteFolder(Handler handler, Integer folder_id) {
+        Call<Boolean> call =  api.deleteFolder(folder_id);
+        call.enqueue(new Callback<Boolean>() {
+            @SneakyThrows
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                Log.d("DELETE FOLDER", "CODE " + response.code());
+                if (response.isSuccessful()) {
+                    Message msg = new Message();
+                    msg.obj = response;
+                    msg.what = RESULT_CODE.SUCCESS.ordinal();
+                    handler.sendMessage(msg);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.d("DELETE FOLDER", "FAIL " + t.toString());
+
+            }
+        });
+    }
     public void testCredentials(Handler handler) {
         Call<Boolean> call = api.testUserConnection();
         call.enqueue(new Callback<Boolean>() {

@@ -8,6 +8,7 @@ import lombok.Data;
 public class File implements FsObject {
     private Integer id;
     private String name;
+    private Integer parentId;
 
 
     @Override

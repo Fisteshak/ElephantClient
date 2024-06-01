@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -26,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.elephant.client.FolderPath;
 import com.elephant.client.R;
 import com.elephant.client.databinding.FragmentMainBinding;
+import com.elephant.client.models.File;
 import com.elephant.client.models.FolderStructure;
 import com.elephant.client.models.FsObject;
 import com.elephant.client.models.ResourceFile;
@@ -44,17 +47,20 @@ import retrofit2.Response;
  * Use the {@link mainFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class mainFragment extends Fragment implements FilesystemAdapter.OnFolderClickListener, FilesystemAdapter.OnFileClickListener {
+public class mainFragment extends Fragment
+        implements FilesystemAdapter.OnFolderClickListener, FilesystemAdapter.OnFileDownloadBtnListener,
+        FilesystemAdapter.OnFolderDeleteBtnListener, FilesystemAdapter.OnFileDeleteBtnListener {
 
     public static final int CHOOSE_FILE_REQUEST_CODE = 123;
     public static final int GET_FILE_REQUEST_CODE = 124;
     FragmentMainBinding binding;
 
-    private String saveFile;
+    private byte[] saveFile;
     private String saveFileName;
     FilesystemAdapter adapter;
     Handler handler;
     Handler createFolderHandler;
+    Handler deleteFileHandler;
     Integer msgID = 10;
     ResourceFile resourceFile = null;
 
@@ -70,7 +76,6 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
 
     // path should not have leading or trailing slashes e.g.
     // correct: "folder1/folder2"
-    private Integer currentFolderID = 1;
 
     FolderPath folderPath = new FolderPath();
     private Handler refreshBtnHandler;
@@ -150,8 +155,6 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
 
         createFolderHandler = new Handler(msg -> {
             if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
-
-
                 Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
             }
             return false;
@@ -160,12 +163,13 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
         getFileHandler = new Handler(msg -> {
             if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
                 try (ResponseBody responseBody = ((Response<ResponseBody>) msg.obj).body()) {
-                    saveFile = responseBody.string();
+                    saveFile = responseBody.bytes().clone();
+                    Log.d("size0", String.valueOf(responseBody.contentLength()));
 
                     Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                     intent.addCategory(Intent.CATEGORY_OPENABLE);
                     intent.setType("*/*");
-                    intent.putExtra(Intent.EXTRA_TITLE, "YOUR FILENAME");
+                    intent.putExtra(Intent.EXTRA_TITLE, saveFileName);
                     startActivityForResult(intent, GET_FILE_REQUEST_CODE);
 
                 } catch (Exception e) {
@@ -179,6 +183,16 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
         });
 
 
+        deleteFileHandler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(@NonNull Message msg) {
+                if (msg.what == Network.RESULT_CODE.SUCCESS.ordinal()) {
+                    Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
+                }
+                return false;
+            }
+        });
+
         binding.refreshBtn.setOnClickListener(v -> {
 
 //            Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
@@ -191,7 +205,7 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
 
         });
 
-        adapter = new FilesystemAdapter(this::onFolderClick, this::onFileClick, refreshBtnHandler);
+        adapter = new FilesystemAdapter(this, this,this, this, refreshBtnHandler);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerView.setAdapter(adapter);
 
@@ -257,9 +271,14 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
 
             try {
                 OutputStream output = getContext().getContentResolver().openOutputStream(uri);
-                output.write(saveFile.getBytes());
-                output.flush();
-                output.close();
+                try {
+                    Log.d("size1", String.valueOf(saveFile.length));
+                    output.write(saveFile);
+                } catch (Exception e) {
+                    output.flush();
+                    output.close();
+                }
+
             }
             catch(IOException e) {
                 Toast.makeText(getActivity().getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
@@ -267,18 +286,8 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
         }
     }
 
-    @Override
-    public void onFolderClick(int id) {
 
-        //binding.folderPathTv.setText(currentFolderID.toString());
-        Network.getInstance().getFolders(refreshBtnHandler, id);
 
-    }
-
-    @Override
-    public void onFileClick(int fileID) {
-        Network.getInstance().getFile(getFileHandler, fileID);
-    }
 
     public void showPopupWindow(View view, LayoutInflater inflater) {
         // inflate the layout of the popup window
@@ -381,5 +390,29 @@ public class mainFragment extends Fragment implements FilesystemAdapter.OnFolder
         });
     }
 
+
+    @Override
+    public void onFolderDeleteBtnClick(int id) {
+        Network.getInstance().deleteFolder(deleteFileHandler, id);
+
+    }
+
+    @Override
+    public void onFileDeleteBtnClick(File file) {
+        Network.getInstance().deleteFile(deleteFileHandler, file.getId());
+    }
+
+    @Override
+    public void onFolderDownloadBtnClick(int id) {
+
+        //binding.folderPathTv.setText(currentFolderID.toString());
+        Network.getInstance().getFolders(refreshBtnHandler, id);
+    }
+
+    @Override
+    public void onFileDownloadBtnClick(File file) {
+        Network.getInstance().getFile(getFileHandler, file.getId());
+        saveFileName = file.getName();
+    }
 
 }

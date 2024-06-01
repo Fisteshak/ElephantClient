@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">ElephantClient</string>
+    <string name="app_name">Elephant</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="vertical_ellipsis">&#8942;</string>
+
 </resources>
