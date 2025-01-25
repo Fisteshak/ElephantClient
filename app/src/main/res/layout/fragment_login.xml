@@ -34,6 +34,16 @@
             android:maxLength="20"
             android:textSize="24sp" />
 
+        <EditText
+            android:id="@+id/enterIPEditText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Введите IP сервера"
+            android:inputType="text"
+            android:maxLength="20"
+            android:textSize="24sp" />
+
         <TextView
             android:id="@+id/statusLine"
             android:layout_width="wrap_content"

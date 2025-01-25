@@ -2,8 +2,10 @@ package com.elephant.client.network;
 
 
 import com.elephant.client.models.FolderStructure;
+import com.elephant.client.models.User;
 
 import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -19,6 +21,9 @@ public interface API {
 
     @GET("user/test")
     Call<Boolean> testUserConnection();
+
+    @GET("user/register")
+    Call<User> registerUser(@Body RequestBody user);
 
     @GET("fs/folder")
     Call<FolderStructure> getFolders(@Query("id") Integer folderID);

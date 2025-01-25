@@ -45,7 +45,7 @@ public class Network {
 
     }
 
-    private Network(User user) {
+    private Network(User user, String IP) {
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(new BasicAuthInterceptor(user.getUsername(), user.getPassword()))
@@ -53,7 +53,7 @@ public class Network {
                 .build();
 
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.43.71:8080")
+                .baseUrl("http://" + IP)
                 .addConverterFactory(GsonConverterFactory.create(
                         new GsonBuilder()
                                 .setLenient()
@@ -66,9 +66,9 @@ public class Network {
 
     }
 
-    public static Network getInstance(User user) {
+    public static Network getInstance(User user, String IP) {
 
-        instance = new Network(user);
+        instance = new Network(user, IP);
 
         return instance;
     }
@@ -80,9 +80,9 @@ public class Network {
         return instance;
     }
 
-    public void setUser(User user) {
+    public void setUser(User user, String IP) {
         this.user = user;
-        instance = new Network(user);
+        instance = new Network(user, IP);
     }
 
     public void getFolders(Handler handler, Integer parentFolderID) {

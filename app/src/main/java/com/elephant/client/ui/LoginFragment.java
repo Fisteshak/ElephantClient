@@ -83,9 +83,12 @@ public class LoginFragment extends Fragment {
             public void onClick(View v) {
                 EditText usernameED = view.findViewById(R.id.enterUsernameEditText);
                 EditText passwordED = view.findViewById(R.id.enterPasswordEditText);
+                EditText ipED = view.findViewById(R.id.enterIPEditText);
                 TextView statusLine = view.findViewById(R.id.statusLine);
+
                 String username = usernameED.getText().toString();
                 String password = passwordED.getText().toString();
+                String ip = ipED.getText().toString();
 
                 if (username.isEmpty()) {
                     statusLine.setText("Введите логин");
@@ -97,9 +100,14 @@ public class LoginFragment extends Fragment {
                     return;
                 }
 
+                if (ip.isEmpty()) {
+                    statusLine.setText("Введите IP");
+                    return;
+                }
+
                 binding.statusLine.setText("Подключение...");
 
-                network = Network.getInstance(new User(username, password));
+                network = Network.getInstance(new User(username, password), ip);
 
                 Handler handler = new Handler(new Handler.Callback() {
                     @Override

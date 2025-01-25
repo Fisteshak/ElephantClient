@@ -219,7 +219,7 @@ public class mainFragment extends Fragment
                 // Handle the back button event
             }
         };
-        requireActivity().getOnBackPressedDispatcher().addCallback(this, callback);
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
 
         Network.getInstance().getFolders(refreshBtnHandler, folderPath.getTopFolder().getId());
 
